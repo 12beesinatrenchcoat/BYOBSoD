@@ -1,0 +1,36 @@
+# originally stolen from https://jekyllrb.com/docs/continuous-integration/github-actions/, modified over the times
+# <3
+
+name: Build and deploy site to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  github-pages:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "checking out..."
+        uses: actions/checkout@v3
+
+      - name: "setting up node..."
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: "building the site..."
+        run: |
+          npm ci
+          npm run build
+
+      - name: "deploy!"
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: 'gh-pages'
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'

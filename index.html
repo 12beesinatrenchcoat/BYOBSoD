@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<link rel="icon" href="./favicon.ico" sizes="any">
+		<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+		<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+		<link rel="manifest" href="./manifest.webmanifest">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<script type="module" src="/main.js"></script>
+		<title>BYOBSoD</title>
+
+		<!-- fonts -->
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400&display=swap" rel="stylesheet">
+
+		<!-- other meta tags-->
+		<meta name="theme-color" content="#0078d7">
+		<meta property="og:title" content="BYOBSoD">
+		<meta property="og:description" content="Put a fake Windows 10-ish BSOD on your screen. Because why not.">
+		<meta property="og:type" content="website">
+		<meta property="og:url" content="https://12beesinatrenchco.at/byobsod">
+		<meta property="og:image" content="https://12beesinatrenchco.at/byobsod/icon-512.png">
+	</head>
+	<body>
+		<!-- The BSOD itself. -->
+		<main>
+			<div id="bsod-contents">
+				<div id="emoticon">:(</div>
+				<div id="big-message" class="bsod-fs-1">Your PC ran into a problem and needs to restart. We're just collecting some error info, and then we'll restart for you.</div>
+				<div id="progress" class="bsod-fs-1"><span id="progress-percentage">0</span>% complete</div>
+				<div id="bsod-bottom">
+					<img id="qr-code" src="/qr.png" alt="" srcset="">
+					<div>
+						<span id="more-info" class="bsod-fs-2">For more information about this issue and possible fixes, visit https://www.windows.com/stopcode</span>
+						<div id="support-info">
+							<div id="support-info-1" class="bsod-fs-3">If you call a support person, give them this info:</div>
+							<div class="bsod-fs-3">Stop code: <span id="stop-code">STOP_CODE</span></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</main>
+
+		<!-- Settings and other content. -->
+		<div id="setup">
+			<h1>Bring Your Own Blue Screen of Death</h1>
+			<p>Put a fake Windows 10-ish BSOD on your screen. Because why not.</p>
+
+			<fieldset id="ios-warning" class="warning">
+				<legend>⚠ WARNING</legend>
+				<p>It looks like you're on an iPad. There is a close button when entering full screen (in the top left) that I cannot get rid of. Sorry</p>
+			</fieldset>
+
+			<div id="inputs">
+				<fieldset>
+					<legend>screen color</legend>
+					<label><input type="radio" name="bg-color" value="#0078d7"> windows 10 blue </label>
+					<label><input type="radio" name="bg-color" value="#266e25"> windows insider green </label>
+					<label><input type="radio" name="bg-color" value="#000"> windows 11 black </label>
+				</fieldset>
+
+				<fieldset>
+					<legend>text</legend>
+					<label>
+						emoticon
+						<input type="text"
+							name="emoticon"
+							placeholder=":("
+						>
+					</label>
+
+					<label>
+						big message
+						<input type="text"
+							name="big-message"
+							placeholder="Your PC ran into a problem and needs to restart. We're just collecting some error info, and then we'll restart for you."
+						>
+					</label>
+
+					<label>
+						qr code line 1
+						<input
+							type="text"
+							name="more-info"
+							placeholder="For more information about this issue and possible fixes, visit https://windows.com/stopcode"
+						>
+					</label>
+
+					<label>
+						qr code line 2
+						<input
+							type="text"
+							name="support-info-1"
+							placeholder="If you call a support person, give them this info:"
+						>
+					</label>
+
+					<label>
+						stop code
+						<input
+							type="text"
+							name="stop-code"
+							placeholder="INVALID_DATA_ACCESS_TRAP"
+						>
+					</label>
+				</fieldset>
+
+				<fieldset>
+					<legend>misc</legend>
+					<label>
+						approximate length of bsod (in seconds)
+						<input type="number" name="length" min="5" max="999" placeholder="30">
+					</label>
+				</fieldset>
+
+				<button id="create" type="submit">blue screen!</button>
+			</div>
+
+			<p>To cancel, exit fullscreen. Or refresh. Or just close the tab.</p>
+
+			<p>Made by <a href="https://12beesinatrenchco.at">12beesinatrenchcoat</a>. Source code <a href="https://github.com/12beesinatrenchcoat/byobsod">here</a>.</p>
+		</div>
+	</body>
+</html>
