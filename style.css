@@ -195,8 +195,10 @@ main {
 #qr-code {
 	margin-right: 1.25rem;
 	height: 7.19rem;
+	image-rendering: -moz-crisp-edges;
 	image-rendering: -webkit-optimize-contrast;
 	image-rendering: crisp-edges;
+	image-rendering: pixelated;
 }
 
 #qr-code + div {
