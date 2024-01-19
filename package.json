@@ -11,6 +11,6 @@
   "devDependencies": {
     "eslint": "^8.28.0",
     "eslint-config-xo": "^0.43.1",
-    "vite": "^3.2.3"
+    "vite": "^3.2.8"
   }
 }
