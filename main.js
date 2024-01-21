@@ -1,49 +1,60 @@
 import "./style.css";
 
-let msCurrent = 0;
-let msToComplete = 30e3;
+let start; // Date.now()
+let end; // Date.now() + duration
 
-let lastProgress = 0;
-let progress = 0;
-let started = false;
-
-let timeout;
+let progress = 0; // Percentage displayed on BSoD
+let interval; // The updateProgress() interval
+let intervalsToWait = 0; // Intervals to pause updating progress.
+let intervalsToZoom = 0; // Intervals to not pause updating progress.
 
 let fullscreened = false;
 
 function updateProgress() {
-	if (msToComplete <= msCurrent) {
-		document.querySelector("#progress-percentage").textContent = "100";
-		console.log("BSOD done!");
-		timeout = setTimeout(() => {
-			document.querySelector("main").style.setProperty("display", "none");
-			document.body.style.removeProperty("background-color");
-			if (fullscreened) {
-				const exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen;
-				exitFullscreen.call(document);
-			}
-		}, 2000);
-	} else {
-		const rand = (msToComplete - msCurrent) > 1000
-			? Math.floor(((Math.random() * Math.min((msToComplete / 2), 10000)) - 1000) + 1000)
-			: 1000;
+	interval = setInterval(() => {
+		const current = Date.now();
 
-		if (started) {
-			lastProgress = progress;
-			progress = Math.max(
-				Math.min((msCurrent / msToComplete * (((Math.random() * 0.5) + 0.5) * 100)) + ((Math.random() * 10) - 5), 99),
-				lastProgress, // Make sure progress is always going up…
-			);
-		} else {
-			progress = 0;
-			started = true;
+		if (current >= end) {
+			progress = 100;
+			document.querySelector("#progress-percentage").textContent = "100";
+			console.log("BSOD done!");
+			clearInterval(interval);
+
+			setTimeout(() => {
+				document.querySelector("main").style.setProperty("display", "none");
+				document.body.style.removeProperty("background-color");
+				if (fullscreened) {
+					const exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen;
+					exitFullscreen.call(document);
+				}
+			}, 1000);
 		}
 
-		msCurrent += rand;
+		if (intervalsToZoom >= 1) {
+			intervalsToZoom--;
+		} else if (intervalsToWait >= 1) {
+			intervalsToWait--;
+			return;
+		}
 
-		document.querySelector("#progress-percentage").textContent = String(Math.floor(progress));
-		timeout = setTimeout(updateProgress, rand);
-	}
+		const percent = (current - start) / (end - start);
+		const percentSquared = percent ** 2;
+		progress = Math.min(100, Math.max(
+			100 * ((percentSquared / ((2 * (percentSquared - percent)) + 1)) + ((Math.random() * 0.1) - 0.08)),
+			progress, // Make sure progress doesn't go down
+		));
+
+		if (Math.random() * percent > 0.6) {
+			intervalsToZoom = Math.round(Math.random() * 10) + 1;
+			console.log("zooming " + intervalsToZoom);
+		} else {
+			intervalsToWait = Math.round((Math.random() * (Math.min(((end - current) / 100) - 10, 75) + 10)));
+			console.log("waiting " + intervalsToWait);
+		}
+
+		document.querySelector("#progress-percentage").textContent = progress.toFixed(0);
+		console.log(intervalsToWait, intervalsToZoom, percent);
+	}, 100);
 }
 
 // Changing background and theme color (affects iOS)
@@ -56,13 +67,15 @@ document.getElementsByName("bg-color").forEach(element => {
 	});
 });
 
+// Starting the BSOD
 document.querySelector("#create").addEventListener("click", () => {
-	console.group("BSOD at " + Date.now());
-	msCurrent = 0;
-	msToComplete = document.querySelector("input[name='length']").value * 1000 || 30000;
-	started = false;
+	start = Date.now();
+	const duration = document.querySelector("input[name='length']")
+		.valueAsNumber * 1000 || 30e3;
+	end = start + duration;
+	console.group("BSOD at " + start);
 
-	console.log("Blue screening for " + msToComplete + "ms");
+	console.log("Blue screening for " + duration + "ms");
 
 	// Setting background and theme color again, just in case
 	document.getElementsByName("bg-color").forEach(element => {
@@ -83,6 +96,13 @@ document.querySelector("#create").addEventListener("click", () => {
 		console.log(bsodElement, inputValue);
 		bsodElement.textContent = inputValue;
 	});
+
+	// Resetting variables/text
+	document.querySelector("#progress-percentage").textContent = 0;
+	progress = 0;
+	intervalsToWait = Math.min(10, Math.floor(duration / 200));
+	intervalsToZoom = 0;
+
 	console.groupEnd(1);
 
 	const bsodElement = document.querySelector("main");
@@ -98,14 +118,12 @@ document.querySelector("#create").addEventListener("click", () => {
 	}
 
 	bsodElement.style.setProperty("display", "flex");
-
 	updateProgress();
 });
 
 // Cancelling BSOD
 function cancelBSOD() {
-	msCurrent = 0;
-	clearTimeout(timeout);
+	clearInterval(interval);
 	document.querySelector("main").style.setProperty("display", "none");
 	document.body.style.removeProperty("background-color");
 	console.log("BSOD cancelled.");
@@ -137,5 +155,6 @@ if (
 	/iPad/.test(navigator.platform)
 	|| (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
 ) {
-	document.querySelector("#ios-warning").style.setProperty("display", "block");
+	const iosWarning = document.querySelector("#ios-warning");
+	iosWarning.style.setProperty("display", "block");
 }
