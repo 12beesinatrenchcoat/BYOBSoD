@@ -10,6 +10,110 @@ let intervalsToZoom = 0; // Intervals to not pause updating progress.
 
 let fullscreened = false;
 
+const defaults = {
+	"bg-color": "#0078d7",
+	emoticon: ":(",
+	"big-message": "Your PC ran into a problem and needs to restart. We're just collecting some error info, and then we'll restart for you.",
+	"more-info": "For more information about this issue and possible fixes, visit https://windows.com/stopcode",
+	"support-info": "If you call a support person, give them this info:",
+	"stop-code": "INVALID_DATA_ACCESS_TRAP",
+};
+
+const textKeys = ["emoticon", "big-message", "more-info", "support-info", "stop-code"];
+
+// Changing background and theme color (affects iOS)
+document.getElementsByName("bg-color").forEach(element => {
+	element.addEventListener("change", () => {
+		document.querySelector("meta[name='theme-color']")
+			.setAttribute("content", element.value);
+		document.querySelector("main")
+			.style.setProperty("background-color", element.value);
+	});
+});
+
+// Starting the BSoD
+document.querySelector("#form").addEventListener("submit", event => {
+	// Get data from form, set text on screen
+	event.preventDefault();
+	const formData = new FormData(event.target);
+
+	console.log(formData);
+
+	for (const key of textKeys) {
+		console.log(key, formData.get(key));
+		document.getElementById(key).textContent = formData.get(key) || defaults[key];
+	}
+
+	// Get a time to end the BSoD
+	start = Date.now();
+	const duration = Number(formData.get("duration")) * 1000 || 30e3;
+	end = start + duration;
+
+	// Resetting progress variables + text
+	document.querySelector("#progress-percentage").textContent = 0;
+	progress = 0;
+	intervalsToWait = Math.min(10, Math.floor(duration / 200));
+	intervalsToZoom = 0;
+
+	console.group("BSOD at " + start);
+
+	console.log("Blue screening for " + duration + "ms");
+
+	// Setting background and theme color again, just in case
+	const bgColor = formData.get("bg-color") || defaults["bg-color"];
+	document.querySelector("meta[name='theme-color']")
+		.setAttribute("content", bgColor);
+	document.querySelector("main")
+		.style.setProperty("background-color", bgColor);
+	document.body.style.setProperty("background-color", bgColor);
+
+	const bsodElement = document.querySelector("main");
+
+	try {
+		// For Safari. Fullscreen is supported on iPadOS / iOS >= 12, but not iPhone
+		const fullscreen = bsodElement.requestFullscreen || bsodElement.webkitRequestFullscreen;
+		fullscreen.call(bsodElement, {navigationUI: "hide"});
+		fullscreened = true;
+	} catch (error) {
+		fullscreened = false;
+		console.error(error);
+	}
+
+	// Make BSoD visible.
+	bsodElement.style.setProperty("display", "flex");
+	updateProgress();
+});
+
+// Cancelling BSOD
+function cancelBSOD() {
+	clearInterval(interval);
+	document.querySelector("main").style.setProperty("display", "none");
+	document.body.style.removeProperty("background-color");
+	console.log("BSOD cancelled.");
+	console.groupEnd(1);
+}
+
+document.addEventListener("keydown", event => {
+	if (event.key === "Escape") {
+		cancelBSOD();
+	}
+});
+
+document.addEventListener("fullscreenchange", () => {
+	if (!document.fullscreenElement) {
+		cancelBSOD();
+		fullscreened = false;
+	}
+});
+
+document.addEventListener("webkitfullscreenchange", () => {
+	if (!document.webkitFullscreenElement) {
+		cancelBSOD();
+		fullscreened = false;
+	}
+});
+
+// Randomly updating the "% complete". (This is a mess…)
 function updateProgress() {
 	interval = setInterval(() => {
 		const current = Date.now();
@@ -49,7 +153,7 @@ function updateProgress() {
 			console.log("zooming " + intervalsToZoom);
 		} else {
 			intervalsToWait = Math.round((Math.random() * (Math.min(((end - current) / 100) - 10, 75) + 10)));
-			console.log("waiting " + intervalsToWait);
+			console.log("waiting " + intervalsToWait + " intervals");
 		}
 
 		document.querySelector("#progress-percentage").textContent = progress.toFixed(0);
@@ -57,100 +161,7 @@ function updateProgress() {
 	}, 100);
 }
 
-// Changing background and theme color (affects iOS)
-document.getElementsByName("bg-color").forEach(element => {
-	element.addEventListener("change", () => {
-		document.querySelector("meta[name='theme-color'")
-			.setAttribute("content", element.value);
-		document.querySelector("main")
-			.style.setProperty("background-color", element.value);
-	});
-});
-
-// Starting the BSOD
-document.querySelector("#create").addEventListener("click", () => {
-	start = Date.now();
-	const duration = document.querySelector("input[name='length']")
-		.valueAsNumber * 1000 || 30e3;
-	end = start + duration;
-	console.group("BSOD at " + start);
-
-	console.log("Blue screening for " + duration + "ms");
-
-	// Setting background and theme color again, just in case
-	document.getElementsByName("bg-color").forEach(element => {
-		if (element.checked) {
-			document.querySelector("meta[name='theme-color'")
-				.setAttribute("content", element.value);
-			document.querySelector("main")
-				.style.setProperty("background-color", element.value);
-			document.body.style.setProperty("background-color", element.value);
-		}
-	});
-
-	// Setting text
-	console.group("Setting text…");
-	document.querySelectorAll("fieldset > label > input[type='text']").forEach(input => {
-		const bsodElement = document.querySelector("#" + input.getAttribute("name"));
-		const inputValue = input.value || input.getAttribute("placeholder");
-		console.log(bsodElement, inputValue);
-		bsodElement.textContent = inputValue;
-	});
-
-	// Resetting variables/text
-	document.querySelector("#progress-percentage").textContent = 0;
-	progress = 0;
-	intervalsToWait = Math.min(10, Math.floor(duration / 200));
-	intervalsToZoom = 0;
-
-	console.groupEnd(1);
-
-	const bsodElement = document.querySelector("main");
-
-	try {
-		// For Safari. Fullscreen is supported on iPadOS / iOS >= 12, but not iPhone
-		const fullscreen = bsodElement.requestFullscreen || bsodElement.webkitRequestFullscreen;
-		fullscreen.call(bsodElement, {navigationUI: "hide"});
-		fullscreened = true;
-	} catch (error) {
-		fullscreened = false;
-		console.error(error);
-	}
-
-	bsodElement.style.setProperty("display", "flex");
-	updateProgress();
-});
-
-// Cancelling BSOD
-function cancelBSOD() {
-	clearInterval(interval);
-	document.querySelector("main").style.setProperty("display", "none");
-	document.body.style.removeProperty("background-color");
-	console.log("BSOD cancelled.");
-	console.groupEnd(1);
-}
-
-document.addEventListener("keydown", event => {
-	if (event.key === "Escape") {
-		cancelBSOD();
-	}
-});
-
-document.addEventListener("fullscreenchange", () => {
-	if (!document.fullscreenElement) {
-		cancelBSOD();
-		fullscreened = false;
-	}
-});
-
-document.addEventListener("webkitfullscreenchange", () => {
-	if (!document.webkitFullscreenElement) {
-		cancelBSOD();
-		fullscreened = false;
-	}
-});
-
-/* IOS Warning */
+/* Display a warning if on iPad. */
 if (
 	/iPad/.test(navigator.platform)
 	|| (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
